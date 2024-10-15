@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetch Data Example</title>
+    <title>Data Fetching Example</title>
+    <script defer src="script.js"></script>
 </head>
 <body>
-    <h1>Fetch Data from JSON</h1>
+    <h1>Data Fetching Example</h1>
+    <button id="syncButton">Fetch Synchronously</button>
+    <button id="asyncButton">Fetch Asynchronously</button>
+    <button id="fetchButton">Fetch Using Promises</button>
 
-    <!-- Buttons to trigger different fetching methods -->
-    <button id="syncButton">Synchronous XMLHttpRequest</button>
-    <button id="asyncButton">Asynchronous XMLHttpRequest</button>
-    <button id="fetchButton">Fetch with Promises</button>
-
-    <!-- Table to display the data -->
-    <table border="1">
+    <table border="1" style="margin-top: 20px;">
         <thead>
             <tr>
                 <th>Name</th>
@@ -22,10 +20,9 @@
                 <th>ID</th>
             </tr>
         </thead>
-        <tbody id="dataBody"></tbody>
+        <tbody id="dataBody">
+            <!-- Fetched data will be appended here -->
+        </tbody>
     </table>
-
-    <!-- Linking the JavaScript file -->
-    <script src="script.js"></script>
 </body>
 </html>

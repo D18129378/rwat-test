@@ -1,6 +1,8 @@
-// Paths to GitHub-hosted or local JSON files
-const referenceFilePath = './data/reference.json';  // Ensure this is correct for both local and GitHub
-const data3FilePath = './data/data3.json';  // Known file
+// Paths to GitHub-hosted JSON files
+const baseURL = 'https://d18129378.github.io/rwat-test/';  // Base URL of your GitHub Pages
+
+const referenceFilePath = baseURL + 'data/reference.json';  // Absolute path to the reference.json
+const data3FilePath = baseURL + 'data/data3.json';  // Known file (absolute path)
 
 // Function to append row to the table
 function appendRowToTable(name, surname, id) {
@@ -27,19 +29,19 @@ function fetchSynchronously() {
     const reference = JSON.parse(xhr.responseText);
 
     const xhrData1 = new XMLHttpRequest();
-    xhrData1.open('GET', `./data/${reference.data_location}`, false);
+    xhrData1.open('GET', baseURL + `data/${reference.data_location}`, false);  // Absolute path for data1
     xhrData1.send();
     const data1 = JSON.parse(xhrData1.responseText);
     processData(data1.data);
 
     const xhrData2 = new XMLHttpRequest();
-    xhrData2.open('GET', `./data/${data1.data_location}`, false);
+    xhrData2.open('GET', baseURL + `data/${data1.data_location}`, false);  // Absolute path for data2
     xhrData2.send();
     const data2 = JSON.parse(xhrData2.responseText);
     processData(data2.data);
 
     const xhrData3 = new XMLHttpRequest();
-    xhrData3.open('GET', data3FilePath, false);
+    xhrData3.open('GET', data3FilePath, false);  // Absolute path for data3
     xhrData3.send();
     const data3 = JSON.parse(xhrData3.responseText);
     processData(data3.data);
@@ -53,13 +55,13 @@ function fetchAsynchronously() {
         const reference = JSON.parse(xhr.responseText);
 
         const xhrData1 = new XMLHttpRequest();
-        xhrData1.open('GET', `./data/${reference.data_location}`, true);
+        xhrData1.open('GET', baseURL + `data/${reference.data_location}`, true);
         xhrData1.onload = function () {
             const data1 = JSON.parse(xhrData1.responseText);
             processData(data1.data);
 
             const xhrData2 = new XMLHttpRequest();
-            xhrData2.open('GET', `./data/${data1.data_location}`, true);
+            xhrData2.open('GET', baseURL + `data/${data1.data_location}`, true);
             xhrData2.onload = function () {
                 const data2 = JSON.parse(xhrData2.responseText);
                 processData(data2.data);
@@ -84,12 +86,12 @@ function fetchUsingPromises() {
     fetch(referenceFilePath)
         .then(response => response.json())
         .then(reference => {
-            return fetch(`./data/${reference.data_location}`);
+            return fetch(baseURL + `data/${reference.data_location}`);
         })
         .then(response => response.json())
         .then(data1 => {
             processData(data1.data);
-            return fetch(`./data/${data1.data_location}`);
+            return fetch(baseURL + `data/${data1.data_location}`);
         })
         .then(response => response.json())
         .then(data2 => {
