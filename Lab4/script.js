@@ -1,111 +1,152 @@
-// Paths to GitHub-hosted JSON files
-const baseURL = 'https://d18129378.github.io/rwat-test/';  // Base URL of your GitHub Pages
+const referenceFile = 'data/reference.json';
+const data3File = 'data/data3.json';
 
-const referenceFilePath = baseURL + 'data/reference.json';  // Absolute path to the reference.json
-const data3FilePath = baseURL + 'data/data3.json';  // Known file (absolute path)
-
-// Function to append row to the table
-function appendRowToTable(name, surname, id) {
-    const tableBody = document.getElementById("dataBody");
-    const row = tableBody.insertRow();
-    row.insertCell(0).innerText = name;
-    row.insertCell(1).innerText = surname;
-    row.insertCell(2).innerText = id;
+function clearTable() {
+    document.querySelector('#student-table tbody').innerHTML = '';
 }
 
-// Helper function to process and display data
-function processData(data) {
-    data.forEach(student => {
-        const [name, surname] = student.name.split(" ");
-        appendRowToTable(name, surname, student.id);
+function splitName(fullName) {
+    const nameParts = fullName.split(' ');
+    const surname = nameParts.pop(); 
+    const name = nameParts.join(' ');  
+    return { name, surname };
+}
+
+function displayData(students) {
+    const tableBody = document.querySelector('#student-table tbody');
+    students.forEach(student => {
+        const { name, surname } = splitName(student.name);
+        const row = `<tr>
+            <td>${name}</td>
+            <td>${surname}</td>
+            <td>${student.id}</td>
+        </tr>`;
+        tableBody.innerHTML += row;
     });
 }
 
-// Synchronous XMLHttpRequest
-function fetchSynchronously() {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', referenceFilePath, false);  // Synchronous request
-    xhr.send();
-    const reference = JSON.parse(xhr.responseText);
+// Implementation 1: Synchronous XMLHttpRequest
+function fetchDataSync() {
+    clearTable();
+    
+    function fetchSync(file) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', file, false); // Synchronous request
+        xhr.send(null);
+        if (xhr.status === 200) {
+            return JSON.parse(xhr.responseText);
+        } else {
+            console.error('Error fetching file:', file);
+            return null;
+        }
+    }
 
-    const xhrData1 = new XMLHttpRequest();
-    xhrData1.open('GET', baseURL + `data/${reference.data_location}`, false);  // Absolute path for data1
-    xhrData1.send();
-    const data1 = JSON.parse(xhrData1.responseText);
-    processData(data1.data);
+    let allData = [];
 
-    const xhrData2 = new XMLHttpRequest();
-    xhrData2.open('GET', baseURL + `data/${data1.data_location}`, false);  // Absolute path for data2
-    xhrData2.send();
-    const data2 = JSON.parse(xhrData2.responseText);
-    processData(data2.data);
+    const referenceData = fetchSync(referenceFile);
+    if (referenceData) {
+        const data1 = fetchSync(`data/${referenceData.data_location}`);
+        if (data1) {
+            displayData(data1.data);
+            allData = allData.concat(data1.data);
 
-    const xhrData3 = new XMLHttpRequest();
-    xhrData3.open('GET', data3FilePath, false);  // Absolute path for data3
-    xhrData3.send();
-    const data3 = JSON.parse(xhrData3.responseText);
-    processData(data3.data);
+            const data2 = fetchSync(`data/${data1.data_location}`);
+            if (data2) {
+                displayData(data2.data);
+                allData = allData.concat(data2.data);
+            }
+        }
+    }
+
+    const data3 = fetchSync(data3File);
+    if (data3) {
+        displayData(data3.data);
+        allData = allData.concat(data3.data);
+    }
 }
 
-// Asynchronous XMLHttpRequest with callbacks
-function fetchAsynchronously() {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', referenceFilePath, true);
-    xhr.onload = function () {
-        const reference = JSON.parse(xhr.responseText);
+// Implementation 2: Asynchronous XMLHttpRequest with Callbacks
+function fetchDataAsync() {
+    clearTable();
 
-        const xhrData1 = new XMLHttpRequest();
-        xhrData1.open('GET', baseURL + `data/${reference.data_location}`, true);
-        xhrData1.onload = function () {
-            const data1 = JSON.parse(xhrData1.responseText);
-            processData(data1.data);
-
-            const xhrData2 = new XMLHttpRequest();
-            xhrData2.open('GET', baseURL + `data/${data1.data_location}`, true);
-            xhrData2.onload = function () {
-                const data2 = JSON.parse(xhrData2.responseText);
-                processData(data2.data);
-
-                const xhrData3 = new XMLHttpRequest();
-                xhrData3.open('GET', data3FilePath, true);
-                xhrData3.onload = function () {
-                    const data3 = JSON.parse(xhrData3.responseText);
-                    processData(data3.data);
-                };
-                xhrData3.send();
-            };
-            xhrData2.send();
+    function fetchAsync(file, callback) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', file, true); // Asynchronous request
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                callback(JSON.parse(xhr.responseText));
+            } else {
+                console.error('Error fetching file:', file);
+                callback(null);
+            }
         };
-        xhrData1.send();
-    };
-    xhr.send();
+        xhr.send();
+    }
+
+    let allData = [];
+
+    fetchAsync(referenceFile, function (referenceData) {
+        if (referenceData) {
+            fetchAsync(`data/${referenceData.data_location}`, function (data1) {
+                if (data1) {
+                    displayData(data1.data);
+                    allData = allData.concat(data1.data);
+
+                    fetchAsync(`data/${data1.data_location}`, function (data2) {
+                        if (data2) {
+                            displayData(data2.data);
+                            allData = allData.concat(data2.data);
+                        }
+
+                        fetchAsync(data3File, function (data3) {
+                            if (data3) {
+                                displayData(data3.data);
+                                allData = allData.concat(data3.data);
+                            }
+                        });
+                    });
+                }
+            });
+        }
+    });
 }
 
-// Fetch using promises
-function fetchUsingPromises() {
-    fetch(referenceFilePath)
-        .then(response => response.json())
-        .then(reference => {
-            return fetch(baseURL + `data/${reference.data_location}`);
+// Implementation 3: fetch() with Promises
+function fetchDataWithFetch() {
+    clearTable();
+
+    function fetchJson(file) {
+        return fetch(file).then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load file: ${file}`);
+            }
+            return response.json();
+        });
+    }
+
+    let allData = [];
+
+    fetchJson(referenceFile)
+        .then(referenceData => {
+            return fetchJson(`data/${referenceData.data_location}`);
         })
-        .then(response => response.json())
         .then(data1 => {
-            processData(data1.data);
-            return fetch(baseURL + `data/${data1.data_location}`);
-        })
-        .then(response => response.json())
-        .then(data2 => {
-            processData(data2.data);
-            return fetch(data3FilePath);
-        })
-        .then(response => response.json())
-        .then(data3 => {
-            processData(data3.data);
-        })
-        .catch(error => console.error('Error fetching data:', error));
-}
+            displayData(data1.data);
+            allData = allData.concat(data1.data);
 
-// Event listeners for buttons
-document.getElementById('syncButton').addEventListener('click', fetchSynchronously);
-document.getElementById('asyncButton').addEventListener('click', fetchAsynchronously);
-document.getElementById('fetchButton').addEventListener('click', fetchUsingPromises);
+            return fetchJson(`data/${data1.data_location}`);
+        })
+        .then(data2 => {
+            displayData(data2.data);
+            allData = allData.concat(data2.data);
+
+            return fetchJson(data3File);
+        })
+        .then(data3 => {
+            displayData(data3.data);
+            allData = allData.concat(data3.data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}

@@ -3,16 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Fetching Example</title>
-    <script defer src="script.js"></script>
+    <title>Student Data Fetching</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-    <h1>Data Fetching Example</h1>
-    <button id="syncButton">Fetch Synchronously</button>
-    <button id="asyncButton">Fetch Asynchronously</button>
-    <button id="fetchButton">Fetch Using Promises</button>
-
-    <table border="1" style="margin-top: 20px;">
+    <h1>Student Data Fetching</h1>
+    
+    <!-- Buttons to trigger each implementation -->
+    <button onclick="fetchDataSync()">Synchronous XMLHttpRequest</button>
+    <button onclick="fetchDataAsync()">Asynchronous XMLHttpRequest with Callbacks</button>
+    <button onclick="fetchDataWithFetch()">fetch() with Promises</button>
+    
+    <!-- Table to display the processed data -->
+    <table id="student-table">
         <thead>
             <tr>
                 <th>Name</th>
@@ -20,9 +33,11 @@
                 <th>ID</th>
             </tr>
         </thead>
-        <tbody id="dataBody">
-            <!-- Fetched data will be appended here -->
-        </tbody>
+        <tbody></tbody>
     </table>
+
+    <script src="script.js"></script>
+    <a href="https://d18129378.github.io/rwat-test/Lab4/index.html" target="_blank">View this page on GitHub Pages</a>
+
 </body>
 </html>
