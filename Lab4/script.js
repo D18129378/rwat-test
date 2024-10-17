@@ -1,152 +1,132 @@
-const referenceFile = 'data/reference.json';
-const data3File = 'data/data3.json';
+// Function to display data in the table
+function displayData(data) {
+  const tableBody = document.querySelector("#data-table tbody");
+  tableBody.innerHTML = ''; // Clear existing table data
 
-function clearTable() {
-    document.querySelector('#student-table tbody').innerHTML = '';
+  data.forEach(item => {
+      const row = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      const surnameCell = document.createElement('td');
+      const idCell = document.createElement('td');
+
+      const [firstName, lastName] = item.name.split(' ');
+
+      nameCell.textContent = firstName;
+      surnameCell.textContent = lastName;
+      idCell.textContent = item.id;
+
+      row.appendChild(nameCell);
+      row.appendChild(surnameCell);
+      row.appendChild(idCell);
+
+      tableBody.appendChild(row);
+  });
 }
 
-function splitName(fullName) {
-    const nameParts = fullName.split(' ');
-    const surname = nameParts.pop(); 
-    const name = nameParts.join(' ');  
-    return { name, surname };
+// Fetch and merge data in sequence
+function fetchAndStitchData() {
+  // Fetch data1.json
+  fetch('data1.json')
+      .then(response => response.json())
+      .then(data1 => {
+          const data = data1.data;
+
+          // Fetch data2.json after data1
+          return fetch('data2.json')
+              .then(response => response.json())
+              .then(data2 => {
+                  data.push(...data2.data);  // Merge data1 and data2
+
+                  // Fetch data3.json after data2
+                  return fetch('data3.json')
+                      .then(response => response.json())
+                      .then(data3 => {
+                          data.push(...data3.data);  // Merge all three
+                          return data;
+                      });
+              });
+      })
+      .then(mergedData => {
+          displayData(mergedData);  // Display all merged data
+      })
+      .catch(error => console.error('Error:', error));
 }
 
-function displayData(students) {
-    const tableBody = document.querySelector('#student-table tbody');
-    students.forEach(student => {
-        const { name, surname } = splitName(student.name);
-        const row = `<tr>
-            <td>${name}</td>
-            <td>${surname}</td>
-            <td>${student.id}</td>
-        </tr>`;
-        tableBody.innerHTML += row;
-    });
-}
-
-// Implementation 1: Synchronous XMLHttpRequest
+// Function to handle synchronous XMLHttpRequest
 function fetchDataSync() {
-    clearTable();
-    
-    function fetchSync(file) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', file, false); // Synchronous request
-        xhr.send(null);
-        if (xhr.status === 200) {
-            return JSON.parse(xhr.responseText);
-        } else {
-            console.error('Error fetching file:', file);
-            return null;
-        }
-    }
+  let data = [];
 
-    let allData = [];
+  // Synchronous fetch for data1.json
+  let xhr = new XMLHttpRequest();
+  xhr.open('GET', 'data1.json', false);  // Sync call
+  xhr.send();
 
-    const referenceData = fetchSync(referenceFile);
-    if (referenceData) {
-        const data1 = fetchSync(`data/${referenceData.data_location}`);
-        if (data1) {
-            displayData(data1.data);
-            allData = allData.concat(data1.data);
+  if (xhr.status === 200) {
+      const jsonData = JSON.parse(xhr.responseText);
+      data = data.concat(jsonData.data);
+  }
 
-            const data2 = fetchSync(`data/${data1.data_location}`);
-            if (data2) {
-                displayData(data2.data);
-                allData = allData.concat(data2.data);
-            }
-        }
-    }
+  // Synchronous fetch for data2.json
+  xhr = new XMLHttpRequest();
+  xhr.open('GET', 'data2.json', false);  // Sync call
+  xhr.send();
 
-    const data3 = fetchSync(data3File);
-    if (data3) {
-        displayData(data3.data);
-        allData = allData.concat(data3.data);
-    }
+  if (xhr.status === 200) {
+      const jsonData = JSON.parse(xhr.responseText);
+      data = data.concat(jsonData.data);
+  }
+
+  // Synchronous fetch for data3.json
+  xhr = new XMLHttpRequest();
+  xhr.open('GET', 'data3.json', false);  // Sync call
+  xhr.send();
+
+  if (xhr.status === 200) {
+      const jsonData = JSON.parse(xhr.responseText);
+      data = data.concat(jsonData.data);
+  }
+
+  displayData(data);
 }
 
-// Implementation 2: Asynchronous XMLHttpRequest with Callbacks
+// Function to handle asynchronous XMLHttpRequest
 function fetchDataAsync() {
-    clearTable();
+  let data = [];
 
-    function fetchAsync(file, callback) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', file, true); // Asynchronous request
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.responseText));
-            } else {
-                console.error('Error fetching file:', file);
-                callback(null);
-            }
-        };
-        xhr.send();
-    }
+  const xhr1 = new XMLHttpRequest();
+  xhr1.open('GET', 'data1.json', true);
+  xhr1.onload = function () {
+      if (xhr1.status === 200) {
+          const jsonData = JSON.parse(xhr1.responseText);
+          data = data.concat(jsonData.data);
 
-    let allData = [];
+          const xhr2 = new XMLHttpRequest();
+          xhr2.open('GET', 'data2.json', true);
+          xhr2.onload = function () {
+              if (xhr2.status === 200) {
+                  const jsonData2 = JSON.parse(xhr2.responseText);
+                  data = data.concat(jsonData2.data);
 
-    fetchAsync(referenceFile, function (referenceData) {
-        if (referenceData) {
-            fetchAsync(`data/${referenceData.data_location}`, function (data1) {
-                if (data1) {
-                    displayData(data1.data);
-                    allData = allData.concat(data1.data);
+                  const xhr3 = new XMLHttpRequest();
+                  xhr3.open('GET', 'data3.json', true);
+                  xhr3.onload = function () {
+                      if (xhr3.status === 200) {
+                          const jsonData3 = JSON.parse(xhr3.responseText);
+                          data = data.concat(jsonData3.data);
 
-                    fetchAsync(`data/${data1.data_location}`, function (data2) {
-                        if (data2) {
-                            displayData(data2.data);
-                            allData = allData.concat(data2.data);
-                        }
-
-                        fetchAsync(data3File, function (data3) {
-                            if (data3) {
-                                displayData(data3.data);
-                                allData = allData.concat(data3.data);
-                            }
-                        });
-                    });
-                }
-            });
-        }
-    });
+                          displayData(data);  // Display all data after all async calls complete
+                      }
+                  };
+                  xhr3.send();
+              }
+          };
+          xhr2.send();
+      }
+  };
+  xhr1.send();
 }
 
-// Implementation 3: fetch() with Promises
+// Function to handle Fetch API with Promises
 function fetchDataWithFetch() {
-    clearTable();
-
-    function fetchJson(file) {
-        return fetch(file).then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to load file: ${file}`);
-            }
-            return response.json();
-        });
-    }
-
-    let allData = [];
-
-    fetchJson(referenceFile)
-        .then(referenceData => {
-            return fetchJson(`data/${referenceData.data_location}`);
-        })
-        .then(data1 => {
-            displayData(data1.data);
-            allData = allData.concat(data1.data);
-
-            return fetchJson(`data/${data1.data_location}`);
-        })
-        .then(data2 => {
-            displayData(data2.data);
-            allData = allData.concat(data2.data);
-
-            return fetchJson(data3File);
-        })
-        .then(data3 => {
-            displayData(data3.data);
-            allData = allData.concat(data3.data);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+  fetchAndStitchData();  // Using the fetchAndStitchData function
 }
